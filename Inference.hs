@@ -2,10 +2,14 @@ import Text.ParserCombinators.Parsec hiding (spaces)
 import System.Environment
 import Control.Monad
 
--- For any static analyzer like a type inference system, we'll need to design a language syntax. Many functional languages like Haskell uses a language feature called Abstract Data Types (ADT) to declare the abstract representation of values, so they can be manipulated using other Haskell features.
+-- For any static analyzer like a type inference system, we'll need to design 
+-- a language syntax. Many functional languages like Haskell uses a language 
+-- feature called Abstract Data Types (ADT) to declare the abstract representation 
+-- of values, so they can be manipulated using other Haskell features.
 
 -- We can declare a new ADT using the `data` keyword.
--- Here, we declare a new data type for variables, which are represented as strings internally.
+-- Here, we declare a new data type for variables, which are represented as 
+-- strings internally.
 
 data Token =
   I Int | S String | B Bool |
