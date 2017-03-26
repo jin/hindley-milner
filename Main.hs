@@ -4,15 +4,24 @@ import Control.Monad.Trans
 import System.Console.Haskeline
 import System.Environment
 
+import Syntax (Expr)
 import Parser
+import Infer
+
+inferType :: Expr -> String
+inferType e = case infer e of
+  Left err -> show err
+  Right ty -> show ty
 
 process :: String -> IO ()
-process line = do
-  let res = parseExpr line
-  case res of
-    Left err -> print err
-    Right ast -> print ast 
+process line = case parseExpr line of
+  Left err -> print err
+  Right e -> do 
+    putStrLn line
+    putStrLn (show e ++ ": " ++ inferType e)
+    putStrLn ""
 
+-- https://hackage.haskell.org/package/haskeline-0.7.3.1/docs/System-Console-Haskeline.html
 runRepl :: IO ()
 runRepl = runInputT defaultSettings loop
   where
