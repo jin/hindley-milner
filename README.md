@@ -1,10 +1,22 @@
 # Hindley-Milner type inference system in Haskell
 
-## Building and running the REPL
+## Building and running
+
+Running the binary without an argument starts the REPL.
 
 ```
-ghc Inference.hs 
-./Inference
+ghc Main.hs 
+./Main
+
+# or
+
+runhaskell Main.hs
+```
+
+Some examples are in `examples/expressions.fun`. Load them by specifying the filename.
+
+```
+runhaskell Main.hs examples/expressions.fun
 ```
 
 ## Syntax 
