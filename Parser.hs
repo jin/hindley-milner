@@ -76,13 +76,6 @@ condExpr = do
   elseBranch <- expr
   return $ Cond predicate ifBranch elseBranch
 
--- Function Application
--- appExpr :: Parser Expr
--- appExpr = do
---   fn <- varExpr 
---   arg <- (expr)
---   return $ FApp fn arg
-
 expr :: Parser Expr
 expr = Exp.buildExpressionParser opTable exprParsers
 
