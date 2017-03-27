@@ -5,6 +5,9 @@ false
 1 + 2
 3 * 4
 1 + 2 * 3 + 4
+"abc"
+"d"
+""
 fun f x => fn y => y
 let g = 2 in 3 + 5
 let g = fn y => y in g (3 * 5)

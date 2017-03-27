@@ -9,9 +9,7 @@ import Parser
 import Infer
 
 inferType :: Expr -> String
-inferType e = case infer e of
-  Left err -> show err
-  Right ty -> show ty
+inferType e = let (ty, _) = infer e in show ty
 
 process :: String -> IO ()
 process line = case parseExpr line of
