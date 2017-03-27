@@ -39,8 +39,8 @@ addSubst :: InferredType -> InferredType -> TypeSubstMap -> TypeSubstMap
 addSubst fromType toType substs = sub : substs
   where sub t = if t == fromType then toType else fromType
 
-substType :: InferredType -> TypeSubstMap -> InferredType
-substType = foldr (\sub t -> sub t)
+substType :: TypeSubstMap -> InferredType -> InferredType
+substType substs fromType = foldr (\sub t -> sub t) fromType substs
 
 substEnv :: TypeSubstMap -> TypeEnv -> TypeEnv
 substEnv substs (TypeEnv env) = TypeEnv (foldr Data.Map.map env substs)
@@ -50,7 +50,7 @@ subst _   IntT           = IntT
 subst _   BoolT          = BoolT
 subst _   StringT        = StringT
 subst sub (ArrowT t1 t2) = ArrowT (subst sub t1) (subst sub t2)
-subst sub v@(TypeVar _)  = substType v sub
+subst sub v@(TypeVar _)  = substType sub v
 
 unify :: InferredType -> InferredType -> TypeSubstMap
 unify IntT           IntT             = emptySubst
@@ -59,7 +59,7 @@ unify StringT        StringT          = emptySubst
 unify (ArrowT t1 t2) (ArrowT t1' t2') = subst2 ++ subst1
   where
     subst1 = unify t1 t1'
-    subst2 = unify (substType t2 subst1) (substType t2' subst1)
+    subst2 = unify (substType subst1 t2) (substType subst1 t2')
 unify t v@(TypeVar _) = if v == t || not (occursIn v t)
                            then addSubst v t emptySubst
                            else emptySubst
@@ -84,13 +84,13 @@ infer env (Var x)         = (getType x env, emptySubst)
 -- infer env (Fn y1 y2)      = undefined
 -- infer env (Fun y1 y2 y3)  = undefined 
 -- infer env (FApp y1 y2)    = undefined 
-infer env (Cond e0 e1 e2) = (substType (substType t2 s3) s4, s4 ++ s3 ++ s2 ++ s1)
+infer env (Cond e0 e1 e2) = (substType s4 $ substType s3 t2, s4 ++ s3 ++ s2 ++ s1)
   where
     (t0, s0) = infer env e0
     (t1, s1) = infer (substEnv s0 env) e1
     (t2, s2) = infer (substEnv s1 $ substEnv s0 env) e2
-    s3       = unify (substType (substType t0 s1) s2) BoolT
-    s4       = unify (substType t2 s3) (substType (substType t1 s2) s3)
+    s3       = unify (substType s2 $ substType s1 t0) BoolT
+    s4       = unify (substType s3 t2) (substType s3 $ substType s2 t1)
 infer env (Let x e1 e2)   = (t2, s2 ++ s1)
   where
     (t1, s1) = infer env e1
@@ -104,5 +104,5 @@ infer env (BinOp op e1 e2) = (opType op, s4 ++ s3 ++ s2 ++ s1)
     rightOperandType _ = IntT
     (t1, s1) = infer env e1
     (t2, s2) = infer (substEnv s1 env) e2
-    s3 = unify (substType t1 s2) (leftOperandType op)
-    s4 = unify (substType t2 s3) (rightOperandType op)
+    s3 = unify (substType s2 t1) (leftOperandType op)
+    s4 = unify (substType s3 t2) (rightOperandType op)
