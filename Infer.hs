@@ -42,8 +42,8 @@ addSubst fromType toType substs = sub : substs
 substType :: InferredType -> TypeSubstMap -> InferredType
 substType = foldr (\sub t -> sub t)
 
-substEnv :: TypeEnv -> TypeSubstMap -> TypeEnv
-substEnv (TypeEnv env) substs = TypeEnv (foldr Data.Map.map env substs)
+substEnv :: TypeSubstMap -> TypeEnv -> TypeEnv
+substEnv substs (TypeEnv env) = TypeEnv (foldr Data.Map.map env substs)
 
 subst :: TypeSubstMap -> InferredType -> InferredType
 subst _   IntT           = IntT
@@ -87,8 +87,8 @@ infer env (Var x)         = (getType x env, emptySubst)
 infer env (Cond e0 e1 e2) = (substType (substType t2 s3) s4, s4 ++ s3 ++ s2 ++ s1)
   where
     (t0, s0) = infer env e0
-    (t1, s1) = infer (substEnv env s0) e1
-    (t2, s2) = infer (substEnv (substEnv env s0) s1) e2
+    (t1, s1) = infer (substEnv s0 env) e1
+    (t2, s2) = infer (substEnv s1 $ substEnv s0 env) e2
     s3       = unify (substType (substType t0 s1) s2) BoolT
     s4       = unify (substType t2 s3) (substType (substType t1 s2) s3)
 infer env (Let x e1 e2)   = (t2, s2 ++ s1)
@@ -103,6 +103,6 @@ infer env (BinOp op e1 e2) = (opType op, s4 ++ s3 ++ s2 ++ s1)
     leftOperandType _ = IntT
     rightOperandType _ = IntT
     (t1, s1) = infer env e1
-    (t2, s2) = infer (substEnv env s1) e2
+    (t2, s2) = infer (substEnv s1 env) e2
     s3 = unify (substType t1 s2) (leftOperandType op)
     s4 = unify (substType t2 s3) (rightOperandType op)
