@@ -13,10 +13,10 @@ data InferredType = IntT
                   | StringT
                   | ArrowT InferredType InferredType
                   | TypeVar String
-                    deriving (Show, Eq, Ord)
+                    deriving (Show, Eq)
 
 -- A type environment TypeEnv is a mapping from a program variable to an inferred type.
-data TypeEnv = TypeEnv (Map String InferredType)
+newtype TypeEnv = TypeEnv (Map String InferredType) deriving Show
 
 emptyEnv :: TypeEnv
 emptyEnv = TypeEnv Map.empty
@@ -60,13 +60,13 @@ unify (ArrowT t1 t2) (ArrowT t1' t2') = subst2 ++ subst1
   where
     subst1 = unify t1 t1'
     subst2 = unify (substType t2 subst1) (substType t2' subst1)
-unify t              v@(TypeVar _) = if v == t || not (occursIn v t)
-                                           then addSubst v t emptySubst
-                                           else emptySubst
-unify v@(TypeVar _)  t             = if v == t || not (occursIn v t)
-                                           then addSubst v t emptySubst
-                                           else emptySubst
-unify t1             t2            = error $ "Unable to unify types: " ++ show t1 ++ " and " ++ show t2
+unify t v@(TypeVar _) = if v == t || not (occursIn v t)
+                           then addSubst v t emptySubst
+                           else emptySubst
+unify v@(TypeVar _) t = if v == t || not (occursIn v t)
+                           then addSubst v t emptySubst
+                           else emptySubst
+unify t1 t2           = error $ "Unable to unify types: " ++ show t1 ++ " and " ++ show t2
 
 occursIn :: InferredType -> InferredType -> Bool
 occursIn _ IntT           = False
@@ -81,9 +81,9 @@ infer _   (I _)           = (IntT, emptySubst)
 infer _   (S _)           = (StringT, emptySubst)
 infer _   (B _)           = (BoolT, emptySubst)
 infer env (Var x)         = (getType x env, emptySubst)
-infer env (Fn y1 y2)      = undefined
-infer env (Fun y1 y2 y3)  = undefined 
-infer env (FApp y1 y2)    = undefined 
+-- infer env (Fn y1 y2)      = undefined
+-- infer env (Fun y1 y2 y3)  = undefined 
+-- infer env (FApp y1 y2)    = undefined 
 infer env (Cond e0 e1 e2) = (substType (substType t2 s3) s4, s4 ++ s3 ++ s2 ++ s1)
   where
     (t0, s0) = infer env e0
