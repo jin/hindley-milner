@@ -16,16 +16,16 @@ data InferredType = IntT
                     deriving (Show, Eq, Ord)
 
 -- A type environment TypeEnv is a mapping from a program variable to an inferred type.
-type TypeEnv = Map String InferredType
+data TypeEnv = TypeEnv (Map String InferredType)
 
 emptyEnv :: TypeEnv
-emptyEnv = Map.empty
+emptyEnv = TypeEnv Map.empty
 
 addTypeBinding :: String -> InferredType -> TypeEnv -> TypeEnv
-addTypeBinding = Map.insert
+addTypeBinding var t (TypeEnv env) = TypeEnv (Map.insert var t env)
 
 getType :: String -> TypeEnv -> InferredType
-getType x env = fromMaybe raiseError $ Map.lookup x env
+getType x (TypeEnv env) = fromMaybe raiseError $ Map.lookup x env
   where
     raiseError = error $ x ++ " is not defined in the environment."
 
@@ -40,18 +40,17 @@ addSubst fromType toType substs = sub : substs
   where sub t = if t == fromType then toType else fromType
 
 substType :: InferredType -> TypeSubstMap -> InferredType
-substType fromType substs = toType
-  where toType = foldr (\sub t -> sub t) fromType substs
+substType = foldr (\sub t -> sub t)
 
 substEnv :: TypeEnv -> TypeSubstMap -> TypeEnv
-substEnv = foldr Data.Map.map
+substEnv (TypeEnv env) substs = TypeEnv (foldr Data.Map.map env substs)
 
 subst :: TypeSubstMap -> InferredType -> InferredType
 subst _   IntT           = IntT
 subst _   BoolT          = BoolT
 subst _   StringT        = StringT
 subst sub (ArrowT t1 t2) = ArrowT (subst sub t1) (subst sub t2)
-subst sub v@(TypeVar _)     = substType v sub
+subst sub v@(TypeVar _)  = substType v sub
 
 unify :: InferredType -> InferredType -> TypeSubstMap
 unify IntT           IntT             = emptySubst
