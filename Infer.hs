@@ -116,44 +116,44 @@ infer _   (B _)     = return (BoolT, emptySubst)
 infer env (Var x)   = return (getType x env, emptySubst)
 
 infer env (Fn x e0) = do
-    fVar <- fresh
-    (t0, s0) <- infer (addTypeBinding x fVar env) e0
-    return (ArrowT (substType s0 fVar) t0, s0)
+  fVar <- fresh
+  (t0, s0) <- infer (addTypeBinding x fVar env) e0
+  return (ArrowT (substType s0 fVar) t0, s0)
 
 infer env (Fun f x e0) = do
-    tDom <- fresh
-    tRange <- fresh
-    let newEnv = addTypeBinding f (ArrowT tDom tRange) $ addTypeBinding x tDom env
-    (t0, s0) <- infer newEnv e0
-    s1 <- unify t0 (substType s0 tRange)
-    return (ArrowT (substType s1 (substType s0 tDom)) (substType s1 t0), s1 ++ s0)
+  tDom <- fresh
+  tRange <- fresh
+  let newEnv = addTypeBinding f (ArrowT tDom tRange) $ addTypeBinding x tDom env
+  (t0, s0) <- infer newEnv e0
+  s1 <- unify t0 (substType s0 tRange)
+  return (ArrowT (substType s1 (substType s0 tDom)) (substType s1 t0), s1 ++ s0)
 
 infer env (FApp e1 e2) = do
-    (t1, s1) <- infer env e1
-    (t2, s2) <- infer (substEnv s1 env) e2
-    fVar <- fresh
-    s3 <- unify (substType s2 t1) (ArrowT t2 fVar)
-    return (substType s3 fVar, s3 ++ s2 ++ s1)
+  (t1, s1) <- infer env e1
+  (t2, s2) <- infer (substEnv s1 env) e2
+  fVar <- fresh
+  s3 <- unify (substType s2 t1) (ArrowT t2 fVar)
+  return (substType s3 fVar, s3 ++ s2 ++ s1)
 
 infer env (Cond e0 e1 e2) = do
-    (t0, s0) <- infer env e0
-    (t1, s1) <- infer (substEnv s0 env) e1
-    (t2, s2) <- infer (substEnv s1 $ substEnv s0 env) e2
-    s3       <- unify (substType s2 $ substType s1 t0) BoolT
-    s4       <- unify (substType s3 t2) (substType s3 $ substType s2 t1)
-    return (substType s4 $ substType s3 t2, s4 ++ s3 ++ s2 ++ s1)
+  (t0, s0) <- infer env e0
+  (t1, s1) <- infer (substEnv s0 env) e1
+  (t2, s2) <- infer (substEnv s1 $ substEnv s0 env) e2
+  s3       <- unify (substType s2 $ substType s1 t0) BoolT
+  s4       <- unify (substType s3 t2) (substType s3 $ substType s2 t1)
+  return (substType s4 $ substType s3 t2, s4 ++ s3 ++ s2 ++ s1)
 
 infer env (Let x e1 e2) = do
-    (t1, s1) <- infer env e1
-    (t2, s2) <- infer (addTypeBinding x t1 env) e2
-    return (t2, s2 ++ s1)
+  (t1, s1) <- infer env e1
+  (t2, s2) <- infer (addTypeBinding x t1 env) e2
+  return (t2, s2 ++ s1)
 
 infer env (BinOp op e1 e2) = do
-    (t1, s1) <- infer env e1
-    (t2, s2) <- infer (substEnv s1 env) e2
-    s3 <- unify (substType s2 t1) (leftOperandType op)
-    s4 <- unify (substType s3 t2) (rightOperandType op)
-    return (opType op, s4 ++ s3 ++ s2 ++ s1)
+  (t1, s1) <- infer env e1
+  (t2, s2) <- infer (substEnv s1 env) e2
+  s3 <- unify (substType s2 t1) (leftOperandType op)
+  s4 <- unify (substType s3 t2) (rightOperandType op)
+  return (opType op, s4 ++ s3 ++ s2 ++ s1)
 
 opType :: Op -> InferredType
 opType rator | rator `elem` [GTE, LTE, Equal] = BoolT
