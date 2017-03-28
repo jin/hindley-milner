@@ -6,10 +6,10 @@ import System.Environment
 
 import Syntax (Expr)
 import Parser
-import Infer
+import Infer (emptyEnv, inferExpr)
 
 inferType :: Expr -> String
-inferType e = let (ty, _) = infer emptyEnv e in show ty
+inferType e = show $ inferExpr emptyEnv e
 
 process :: String -> IO ()
 process line = case parseExpr line of
