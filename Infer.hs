@@ -53,8 +53,8 @@ newtype TypeEnv = TypeEnv (Map String InferredType) deriving Show
 emptyEnv :: TypeEnv
 emptyEnv = TypeEnv Map.empty
 
-addTypeBinding :: String -> InferredType -> TypeEnv -> TypeEnv
-addTypeBinding var t (TypeEnv env) = TypeEnv (Map.insert var t env)
+bindType :: String -> InferredType -> TypeEnv -> TypeEnv
+bindType var t (TypeEnv env) = TypeEnv (Map.insert var t env)
 
 getType :: String -> TypeEnv -> InferredType
 getType x (TypeEnv env) = fromMaybe raiseError $ Map.lookup x env
@@ -117,13 +117,13 @@ infer env (Var x)   = return (getType x env, emptySubst)
 
 infer env (Fn x e0) = do
   fVar     <- fresh
-  (t0, s0) <- infer (addTypeBinding x fVar env) e0
+  (t0, s0) <- infer (bindType x fVar env) e0
   return (ArrowT (substType s0 fVar) t0, s0)
 
 infer env (Fun f x e0) = do
   tDom       <- fresh
   tRange     <- fresh
-  let newEnv = addTypeBinding f (ArrowT tDom tRange) $ addTypeBinding x tDom env
+  let newEnv = bindType f (ArrowT tDom tRange) $ bindType x tDom env
   (t0, s0)   <- infer newEnv e0
   s1         <- unify t0 (substType s0 tRange)
   return (ArrowT (substType s1 (substType s0 tDom)) (substType s1 t0), s1 ++ s0)
@@ -145,7 +145,7 @@ infer env (Cond e0 e1 e2) = do
 
 infer env (Let x e1 e2) = do
   (t1, s1) <- infer env e1
-  (t2, s2) <- infer (addTypeBinding x t1 env) e2
+  (t2, s2) <- infer (bindType x t1 env) e2
   return (t2, s2 ++ s1)
 
 infer env (BinOp op e1 e2) = do
